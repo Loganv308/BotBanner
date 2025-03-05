@@ -15,11 +15,12 @@ import org.json.simple.parser.ParseException;
 
 public class Bot {
     // Hardcoded file path to latest server logs file. 
-    public static File serverLogs = new File("/home/anton/mcserver/logs/latest.log");
+    public static final File SERVERLOGS = new File("/home/anton/mcserver/logs/latest.log");
 
     // Hardcoded file path to server whitelist.
-    public static File whitelist = new File("/home/anton/mcserver/whitelist.json");
+    public static final File WHITELIST = new File("/home/anton/mcserver/whitelist.json");
 
+    // Main function
     public static void main(String[] args) throws IOException, ParseException {
 
         // Java JSONParser to go through the whitelist.
@@ -27,7 +28,7 @@ public class Bot {
 
         try {
             // JSONArray obj, casted as a JSONArray -> (JSONARRAY) then parsed using FileReader.
-            JSONArray obj = (JSONArray) parser.parse(new FileReader(whitelist));
+            JSONArray obj = (JSONArray) parser.parse(new FileReader(WHITELIST));
 
             // For each Object (jsonObj) in obj (JSONArray).
             for(Object jsonObj : obj) {
@@ -49,7 +50,7 @@ public class Bot {
             Pattern pattern = Pattern.compile(usernamePattern);
             
             // Try readlogs of the Scanner object, taking in the ServerLogs (Global Variable File Path)
-            try (Scanner readLogs = new Scanner(serverLogs)) {
+            try (Scanner readLogs = new Scanner(SERVERLOGS)) {
 
                 // While the file has a next line (this will run through the whole file until the final text)
                 while (readLogs.hasNextLine()) {
@@ -72,5 +73,11 @@ public class Bot {
         } catch (FileNotFoundException e) {
             System.out.println(e);
         }   
+
+        // -------------------------------------------------------------------------------
+        // "https://<UDM_IP>:443/proxy/network/api/s/default/rest/firewallrule"
+        // -------------------------------------------------------------------------------
+        // Add in code to send an API request to the top layer router on the network to block those IP addresses on the firewall. 
+        // This will ensure in the future that IP addresses (Users) not on the whitelist will be banned. 
     }
 }
