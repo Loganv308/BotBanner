@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,8 +22,10 @@ public class Bot {
     // Hardcoded file path to server whitelist.
     public static final File WHITELIST = new File("/home/anton/mcserver/whitelist.json");
 
+    public static List<String> whiteList = new ArrayList<>();
+
     // Main function
-    public static void main(String[] args) throws IOException, ParseException {
+    public static void main(String[] args) throws IOException, ParseException, InterruptedException {
 
         // Java JSONParser to go through the whitelist.
         JSONParser parser = new JSONParser();
@@ -38,13 +42,15 @@ public class Bot {
 
                 // Username gets casted as a String to jsonObject (JSONObject) and retrieves the name from the JSON data. 
                 String username = (String) jsonObject.get("name");
-                
-                // Prints to CLI whitelisted usernames.
-                System.out.println(username);
+
+                whiteList.add(username);
             }
+
+            // Prints to CLI whitelisted usernames.
+            System.out.println(whiteList);
             
             // Regex pattern for Bot Usernames in log file.
-            String usernamePattern = "\\]:\\s*([\\w\\d_]+) \\(";
+            String usernamePattern = "\\]:\\s*([\\w\\d_]+) \\(/([\\d\\.]+):";
 
             // Pattern object to compile the regex pattern (usernamePattern).
             Pattern pattern = Pattern.compile(usernamePattern);
@@ -63,9 +69,19 @@ public class Bot {
                     
                     // If the matcher indicates a match, it will print it to the console.
                     if (matcher.find()) {
+                        String username = matcher.group(1);
+                        String ipAddress = matcher.group(2);
+                        
+                        System.out.println(username + " " + ipAddress);
 
-                        // Print "Extracted Usernames" from log file to command line. Matcher.group(1) just retrieves the Username from the match. 
-                        System.out.println("Extracted Username: " + matcher.group(1));
+                        if (whiteList.contains(username)) {
+                            System.out.println(username + " is in whitelist.");
+                            return;
+                        } else {
+                            String command = String.format("iptables -A INPUT -s %s -j DROP", ipAddress);
+                            System.out.println("Username: " + username + ", IP: " + ipAddress);
+                            runCommand(command);
+                        }     
                     } 
                 }
             }
@@ -73,11 +89,15 @@ public class Bot {
         } catch (FileNotFoundException e) {
             System.out.println(e);
         }   
-
-        // -------------------------------------------------------------------------------
-        // "https://<UDM_IP>:443/proxy/network/api/s/default/rest/firewallrule"
-        // -------------------------------------------------------------------------------
-        // Add in code to send an API request to the top layer router on the network to block those IP addresses on the firewall. 
-        // This will ensure in the future that IP addresses (Users) not on the whitelist will be banned. 
     }
+                        
+    private static void runCommand(String command) throws IOException, InterruptedException {
+        // Get process runtime to execute commands
+        Process proc = Runtime.getRuntime().exec(command);
+
+        // Wait for command to finish
+        proc.waitFor();
+
+    } 
+
 }
