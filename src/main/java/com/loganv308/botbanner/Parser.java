@@ -98,11 +98,11 @@ public class Parser {
                         System.out.println(username + " is in whitelist, moving on...");
                         return;
                     } else {
-                        String command = String.format("iptables -A INPUT -s %s -j DROP", ipAddress);
+                        String ruleCommand = String.format("iptables -A INPUT -s %s -j DROP", ipAddress);
 
                         if (!ip_exists(ipAddress)) {
                             System.out.println("Username: " + username + ", IP: " + ipAddress + " adding IP address to ban list...");
-                            runCommand(command);
+                            addFirewallRule(ruleCommand);
                         }  else {
                             System.out.println("Username: " + username + ", IP: " + ipAddress + " already exists...");
                         }   
@@ -122,18 +122,24 @@ public class Parser {
         try {
             Process process = processBuilder.start();
             int exitCode = process.waitFor();
-            return exitCode == 0; // 0 means the rule exists
+            System.out.println(exitCode);
+            return exitCode == 1; // 1 means the rule exists
         } catch (IOException | InterruptedException e) {
             return false;
         }
     }
 
-    private static void runCommand(String command) throws IOException, InterruptedException {
-        // Get process runtime to execute commands
-        Process proc = Runtime.getRuntime().exec(command);
-
-        // Wait for command to finish
-        proc.waitFor();
+    private static boolean addFirewallRule(String ipAddr) throws IOException, InterruptedException {
+        String[] cmd = {"iptables", "-A", "INPUT", "-s", "%s", "-j", "DROP", ipAddr};
+        ProcessBuilder processBuilder = new ProcessBuilder(cmd);
+        
+        try {
+            Process process = processBuilder.start();
+            int exitCode = process.waitFor();
+            return exitCode == 1; // 1 means the command has been successfully run. 
+        } catch (IOException | InterruptedException e) {
+            return false;
+        }
     } 
 
     // This checks periodically if new bots have tried joining the server.
