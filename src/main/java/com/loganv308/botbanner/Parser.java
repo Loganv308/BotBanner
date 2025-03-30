@@ -23,6 +23,12 @@ public class Parser {
     // Hardcoded file path to server whitelist.
     private static final File WHITELIST = new File("/home/anton/mcserver/whitelist.json");
 
+    // Initializing Firewall Handler class
+    private static final FirewallHandler fwHandler = new FirewallHandler();
+
+    // Initializing IP Handler class
+    private static final IPHandler ipHandler = new IPHandler();
+
     // Method to get the current server Whitelist
     public Set<String> getWhitelist() throws IOException, ParseException {
 
@@ -72,10 +78,10 @@ public class Parser {
         }
 
         // Regex pattern for Bot Usernames in log file.
-        String usernamePattern = "\\]:\\s*([\\w\\d_]+) \\(/([\\d\\.]+):";
+        String regexPattern = "(?:\\b(\\w+))?\\s*\\(/\\b(\\d{1,3}(?:\\.\\d{1,3}){3}):\\d+\\)";
 
         // Pattern object to compile the regex pattern (usernamePattern).
-        Pattern pattern = Pattern.compile(usernamePattern);
+        Pattern pattern = Pattern.compile(regexPattern);
         
         // Try readlogs of the Scanner object, taking in the ServerLogs (Global Variable File Path)
         try (Scanner readLogs = new Scanner(SERVERLOGS)) {
@@ -92,58 +98,30 @@ public class Parser {
                 // If the matcher indicates a match, it will print it to the console.
                 if (matcher.find()) {
                     String username = matcher.group(1);
+                    System.out.println("USERNAME: " + username);
                     String ipAddress = matcher.group(2);
+                    System.out.println("IP ADDRESS: " + ipAddress);
 
-                    if (whiteList.contains(username)) {
+                    if (username != null && whiteList.contains(username)) {
                         System.out.println(username + " is in whitelist, moving on...");
-                        return;
                     } else {
-                        String ruleCommand = String.format("iptables -A INPUT -s %s -j DROP", ipAddress);
 
-                        if (!ip_exists(ipAddress)) {
+                        boolean exists = ipHandler.ip_exists(ipAddress);
+                        System.out.println("IP rule exists for " + ipAddress + ": " + exists);
+
+                        if (!ipHandler.ip_exists(ipAddress)) {
                             System.out.println("Username: " + username + ", IP: " + ipAddress + " adding IP address to ban list...");
-                            addFirewallRule(ruleCommand);
+                            fwHandler.addFirewallRule(ipAddress);
                         }  else {
                             System.out.println("Username: " + username + ", IP: " + ipAddress + " already exists...");
+                            System.out.println("\n");
                         }   
-                    }     
-                } 
+                    }
+                }
             }
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             System.err.println("Error reading whitelist file: " + e.getMessage());
             throw e;
         }
     }
-
-    private static boolean ip_exists(String ip) {
-        String[] cmd = {"/bin/sh", "-c", "iptables -C INPUT -s " + ip + " -j DROP"};
-        ProcessBuilder processBuilder = new ProcessBuilder(cmd);
-
-        try {
-            Process process = processBuilder.start();
-            int exitCode = process.waitFor();
-            System.out.println(exitCode);
-            return exitCode == 1; // 1 means the rule exists
-        } catch (IOException | InterruptedException e) {
-            return false;
-        }
-    }
-
-    private static boolean addFirewallRule(String ipAddr) throws IOException, InterruptedException {
-        String[] cmd = {"iptables", "-A", "INPUT", "-s", "%s", "-j", "DROP", ipAddr};
-        ProcessBuilder processBuilder = new ProcessBuilder(cmd);
-        
-        try {
-            Process process = processBuilder.start();
-            int exitCode = process.waitFor();
-            return exitCode == 1; // 1 means the command has been successfully run. 
-        } catch (IOException | InterruptedException e) {
-            return false;
-        }
-    } 
-
-    // This checks periodically if new bots have tried joining the server.
-    // private static void periodicCheck() {
-        
-    // }   
 }
