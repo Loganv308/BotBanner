@@ -29,6 +29,8 @@ public class Parser {
     // Initializing IP Handler class
     private static final IPHandler ipHandler = new IPHandler();
 
+    private final FileHandler fileHandler = new FileHandler();
+
     // Method to get the current server Whitelist
     public Set<String> getWhitelist() throws IOException, ParseException {
 
@@ -102,6 +104,10 @@ public class Parser {
                     String ipAddress = matcher.group(2);
                     System.out.println("IP ADDRESS: " + ipAddress);
 
+                    Set<String> ipAddr = new HashSet<>();
+
+                    ipAddr.add(ipAddress);
+
                     if (username != null && whiteList.contains(username)) {
                         System.out.println(username + " is in whitelist, moving on...");
                     } else {
@@ -117,6 +123,8 @@ public class Parser {
                             System.out.println("\n");
                         }   
                     }
+
+                    fileHandler.writeToFile(ipAddr);
                 }
             }
         } catch (IOException e) {
