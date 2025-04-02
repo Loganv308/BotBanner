@@ -4,9 +4,10 @@ import java.io.IOException;
 
 public class IPHandler {
     
-    public static void getIPInformation(String ipAddr) {
+    // Future implementation to get IP information from a website using API. 
+    // public static void getIPInformation(String ipAddr) {
         
-    }
+    // }
 
     // Put IP Addresses in a list instead and check for duplicates that way. 
     public boolean ip_exists(String ipAddr) {

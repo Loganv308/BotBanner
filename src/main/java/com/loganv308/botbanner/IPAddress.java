@@ -31,11 +31,13 @@ public class IPAddress {
         this.timezone = timezone;
     }
 
-    public String getHostname() {
-        return this.hostname;
-    }
+    public String getHostname() { return this.hostname; }
+    public String getCity() { return this.city; }
+    public String getRegion() { return this.region; }
+    public String getCountry() { return this.country; }
+    public String getCoords() { return this.coords; }
+    public String getOrganization() { return this.organization; }
+    public Integer getZip() { return this.zip; }
+    public String getTimezone() { return this.timezone; }
 
-    public String getCity() {
-        return this.city;
-    }
 }
