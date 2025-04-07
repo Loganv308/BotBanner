@@ -9,7 +9,7 @@ public class FileHandler {
     public void writeToFile(Set<String> ipAddresses) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("src/main/java/com/loganv308/botbanner/Output/ListOfIPs.txt"))){
             for(String element : ipAddresses) {
-                writer.write(element);
+                writer.append(element);
                 writer.newLine();
             }            
         } catch (IOException e) {

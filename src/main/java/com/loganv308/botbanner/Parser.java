@@ -31,6 +31,8 @@ public class Parser {
 
     private final FileHandler fileHandler = new FileHandler();
 
+    private final Set<String> ipAddr = new HashSet<>();
+
     // Method to get the current server Whitelist
     public Set<String> getWhitelist() throws IOException, ParseException {
 
@@ -68,7 +70,6 @@ public class Parser {
     }
 
     public void run() throws IOException, InterruptedException, ParseException {
-
         Set<String> whiteList = new HashSet<>(); // Declare and initialize before try-catch
 
         try {
@@ -104,12 +105,11 @@ public class Parser {
                     String ipAddress = matcher.group(2);
                     System.out.println("IP ADDRESS: " + ipAddress);
 
-                    Set<String> ipAddr = new HashSet<>();
-
                     ipAddr.add(ipAddress);
 
                     if (username != null && whiteList.contains(username)) {
                         System.out.println(username + " is in whitelist, moving on...");
+                        System.out.println("\n");
                     } else {
 
                         boolean exists = ipHandler.ip_exists(ipAddress);
@@ -120,16 +120,16 @@ public class Parser {
                             fwHandler.addFirewallRule(ipAddress);
                         }  else {
                             System.out.println("Username: " + username + ", IP: " + ipAddress + " already exists...");
-                            System.out.println("\n");
                         }   
-                    }
-
-                    fileHandler.writeToFile(ipAddr);
+                    }  
                 }
             }
         } catch (IOException e) {
             System.err.println("Error reading whitelist file: " + e.getMessage());
             throw e;
         }
+
+        System.out.println(ipAddr);
+        fileHandler.writeToFile(ipAddr);
     }
 }
