@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.Connection;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
@@ -29,9 +30,12 @@ public class Parser {
     // Initializing IP Handler class
     private static final IPHandler ipHandler = new IPHandler();
 
-    private final FileHandler fileHandler = new FileHandler();
+    private static final FileHandler fileHandler = new FileHandler();
 
-    private final Set<String> ipAddr = new HashSet<>();
+    private static final DatabaseHandler dbHandler = new DatabaseHandler();
+    private static final Connection con = dbHandler.connect();
+
+    private static final Set<String> ipAddr = new HashSet<>();
 
     // Method to get the current server Whitelist
     public Set<String> getWhitelist() throws IOException, ParseException {
@@ -72,6 +76,12 @@ public class Parser {
     public void run() throws IOException, InterruptedException, ParseException {
         Set<String> whiteList = new HashSet<>(); // Declare and initialize before try-catch
 
+        if(con != null) {
+            System.out.println("Database connection successful!");
+        } else {
+            System.out.println("Database connection didn't work :(");
+        }
+
         try {
             whiteList = getWhitelist();
             System.out.println("Whitelist loaded: " + whiteList);
@@ -85,7 +95,7 @@ public class Parser {
 
         // Pattern object to compile the regex pattern (usernamePattern).
         Pattern pattern = Pattern.compile(regexPattern);
-        
+
         // Try readlogs of the Scanner object, taking in the ServerLogs (Global Variable File Path)
         try (Scanner readLogs = new Scanner(SERVERLOGS)) {
 
