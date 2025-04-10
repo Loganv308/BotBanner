@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.Connection;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
@@ -29,7 +30,12 @@ public class Parser {
     // Initializing IP Handler class
     private static final IPHandler ipHandler = new IPHandler();
 
-    private final FileHandler fileHandler = new FileHandler();
+    private static final FileHandler fileHandler = new FileHandler();
+
+    private static final DatabaseHandler dbHandler = new DatabaseHandler();
+    private static final Connection con = dbHandler.connect();
+
+    private static final Set<String> ipAddr = new HashSet<>();
 
     // Method to get the current server Whitelist
     public Set<String> getWhitelist() throws IOException, ParseException {
@@ -68,8 +74,13 @@ public class Parser {
     }
 
     public void run() throws IOException, InterruptedException, ParseException {
-
         Set<String> whiteList = new HashSet<>(); // Declare and initialize before try-catch
+
+        if(con != null) {
+            System.out.println("Database connection successful!");
+        } else {
+            System.out.println("Database connection didn't work :(");
+        }
 
         try {
             whiteList = getWhitelist();
@@ -84,7 +95,7 @@ public class Parser {
 
         // Pattern object to compile the regex pattern (usernamePattern).
         Pattern pattern = Pattern.compile(regexPattern);
-        
+
         // Try readlogs of the Scanner object, taking in the ServerLogs (Global Variable File Path)
         try (Scanner readLogs = new Scanner(SERVERLOGS)) {
 
@@ -104,12 +115,11 @@ public class Parser {
                     String ipAddress = matcher.group(2);
                     System.out.println("IP ADDRESS: " + ipAddress);
 
-                    Set<String> ipAddr = new HashSet<>();
-
                     ipAddr.add(ipAddress);
 
                     if (username != null && whiteList.contains(username)) {
                         System.out.println(username + " is in whitelist, moving on...");
+                        System.out.println("\n");
                     } else {
 
                         boolean exists = ipHandler.ip_exists(ipAddress);
@@ -120,16 +130,16 @@ public class Parser {
                             fwHandler.addFirewallRule(ipAddress);
                         }  else {
                             System.out.println("Username: " + username + ", IP: " + ipAddress + " already exists...");
-                            System.out.println("\n");
                         }   
-                    }
-
-                    fileHandler.writeToFile(ipAddr);
+                    }  
                 }
             }
         } catch (IOException e) {
             System.err.println("Error reading whitelist file: " + e.getMessage());
             throw e;
         }
+
+        System.out.println(ipAddr);
+        fileHandler.writeToFile(ipAddr);
     }
 }
