@@ -1,8 +1,12 @@
 package com.loganv308.botbanner;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.stream.Collectors;
 
 public class DatabaseHandler {
 
@@ -29,5 +33,15 @@ public class DatabaseHandler {
         }
 
         return c;
+    }
+
+    // Function to load the SQL File into the 
+    private static String loadSQLFile(String path) throws Exception {
+        try(InputStream input = DatabaseHandler.class.getClassLoader().getResourceAsStream(path)) {
+            if (input == null) throw new RuntimeException("SQL file not found: " + path);
+            return new BufferedReader(new InputStreamReader(input))
+                .lines()
+                .collect(Collectors.joining("\n"));
+        }
     }
 }
