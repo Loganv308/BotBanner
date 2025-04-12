@@ -1,4 +1,4 @@
-CREATE TABLE IPInformation (
+CREATE TABLE IF NOT EXISTS IPInformation (
     id INTEGER PRIMARY KEY,
     IpAddress TEXT NOT NULL,
     CurrentDate TIMESTAMP WITH TIME ZONE,
@@ -9,5 +9,5 @@ CREATE TABLE IPInformation (
     Coords TEXT NOT NULL,
     Organization TEXT NOT NULL,
     Zip INTEGER NOT NULL,
-    Timezone char(8),
+    Timezone VARCHAR(8)
 );
