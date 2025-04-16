@@ -1,8 +1,6 @@
 package com.loganv308.botbanner;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.util.HashSet;
@@ -11,18 +9,12 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 public class Parser {
 
     // Hardcoded file path to latest server logs file. 
     private static final File SERVERLOGS = new File("/home/anton/mcserver/logs/latest.log");
-
-    // Hardcoded file path to server whitelist.
-    private static final File WHITELIST = new File("/home/anton/mcserver/whitelist.json");
 
     // Initializing Firewall Handler class
     private static final FirewallHandler fwHandler = new FirewallHandler();
@@ -33,47 +25,13 @@ public class Parser {
     private static final FileHandler fileHandler = new FileHandler();
 
     private static final DatabaseHandler dbHandler = new DatabaseHandler();
+    
     private static final Connection con = dbHandler.connect();
 
     private static final Set<String> ipAddr = new HashSet<>();
 
-    // Method to get the current server Whitelist
-    public Set<String> getWhitelist() throws IOException, ParseException {
-
-        Set<String> whiteList = new HashSet<>();
-        
-        JSONParser parser = new JSONParser();
-
-        try {
-            // JSONArray obj, casted as a JSONArray -> (JSONARRAY) then parsed using FileReader.
-            JSONArray obj = (JSONArray) parser.parse(new FileReader(WHITELIST));
-
-            // For each Object (jsonObj) in obj (JSONArray).
-            for(Object jsonObj : obj) {
-
-                // Cast to JSONObject as JSONObject (jsonObj).
-                JSONObject jsonObject = (JSONObject) jsonObj;
-
-                // Username gets casted as a String to jsonObject (JSONObject) and retrieves the name from the JSON data. 
-                String username = (String) jsonObject.get("name");
-
-                whiteList.add(username);
-            } 
-        } catch (FileNotFoundException e) {
-            System.err.println("Whitelist file not found: " + e.getMessage());
-            throw e;  // Rethrowing for caller to handle
-        } catch (IOException e) {
-            System.err.println("Error reading whitelist file: " + e.getMessage());
-            throw e;
-        } catch (ParseException e) {
-            System.err.println("Error parsing whitelist JSON: " + e.getMessage());
-            throw e;
-        } 
-
-        return whiteList;
-    }
-
     public void run() throws IOException, InterruptedException, ParseException {
+        
         Set<String> whiteList = new HashSet<>(); // Declare and initialize before try-catch
 
         if(con != null) {
@@ -83,7 +41,7 @@ public class Parser {
         }
 
         try {
-            whiteList = getWhitelist();
+            whiteList = fileHandler.getWhitelist();
             System.out.println("Whitelist loaded: " + whiteList);
         } catch (IOException | ParseException e) {
             System.err.println("Error loading whitelist: " + e.getMessage());
@@ -111,9 +69,7 @@ public class Parser {
                 // If the matcher indicates a match, it will print it to the console.
                 if (matcher.find()) {
                     String username = matcher.group(1);
-                    System.out.println("USERNAME: " + username);
                     String ipAddress = matcher.group(2);
-                    System.out.println("IP ADDRESS: " + ipAddress);
 
                     ipAddr.add(ipAddress);
 
