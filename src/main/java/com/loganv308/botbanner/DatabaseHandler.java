@@ -78,7 +78,7 @@ public class DatabaseHandler {
 
         Connection con = connect();
 
-        String tableName = "IPAddresses";
+        String tableName = "IPInformation";
         
         boolean tableExists = tableExists(con, tableName);
 
@@ -103,7 +103,7 @@ public class DatabaseHandler {
         }
     }
 
-    public void resetKeys() throws IOException, SQLException {
+    public void resetIncrementKeys() throws IOException, SQLException {
         Connection con = connect();
         
         try {

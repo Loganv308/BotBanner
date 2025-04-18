@@ -73,21 +73,23 @@ public class Parser {
 
                     ipAddr.add(ipAddress);
 
-                    if (username != null && whiteList.contains(username)) {
-                        System.out.println(username + " is in whitelist, moving on...");
-                        System.out.println("\n");
-                    } else {
+                    ipHandler.getIPInformation(ipAddr);
 
-                        boolean exists = ipHandler.ip_exists(ipAddress);
-                        System.out.println("IP rule exists for " + ipAddress + ": " + exists);
+                    // if (username != null && whiteList.contains(username)) {
+                    //     System.out.println(username + " is in whitelist, moving on...");
+                    //     System.out.println("\n");
+                    // } else {
 
-                        if (!ipHandler.ip_exists(ipAddress)) {
-                            System.out.println("Username: " + username + ", IP: " + ipAddress + " adding IP address to ban list...");
-                            fwHandler.addFirewallRule(ipAddress);
-                        }  else {
-                            System.out.println("Username: " + username + ", IP: " + ipAddress + " already exists...");
-                        }   
-                    }  
+                    //     boolean exists = ipHandler.ip_exists(ipAddress);
+                    //     System.out.println("IP rule exists for " + ipAddress + ": " + exists);
+
+                    //     if (!ipHandler.ip_exists(ipAddress)) {
+                    //         System.out.println("Username: " + username + ", IP: " + ipAddress + " adding IP address to ban list...");
+                    //         fwHandler.addFirewallRule(ipAddress);
+                    //     }  else {
+                    //         System.out.println("Username: " + username + ", IP: " + ipAddress + " already exists...");
+                    //     }   
+                    // }  
                 }
             }
         } catch (IOException e) {
