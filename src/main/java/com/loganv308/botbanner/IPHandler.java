@@ -14,29 +14,33 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class IPHandler {
 
-    private static final String APIURL = "http://ip-api.com/json/"; 
+    private static final String APIURL = "http://ip-api.com/json/";
     
     // Takes in a set of IP addresses, calls the IP-API website above which obtains information of each. From there, it passes the information into the database via IP Address class. 
     // TODO: Add for loop to go through the set, passing each IP to the website for further analysis. 
     public static void getIPInformation(Set<String> ipAddr) {
         try {
-            
             HttpClient client = HttpClient.newHttpClient();
             
             // HTTP request for IP info website
-            HttpRequest IPRequest = HttpRequest.newBuilder()
-                .uri(new URI(APIURL))
-                .GET()
-                .build();
+            for(String ip : ipAddr) {
+                
+                String ipURL = APIURL + ip;
 
-            HttpResponse<String> response = client.send(IPRequest, HttpResponse.BodyHandlers.ofString());
+                HttpRequest IPRequest = HttpRequest.newBuilder()
+                    .uri(new URI(ipURL))
+                    .GET()
+                    .build();
 
-            ObjectMapper mapper = new ObjectMapper();
+                HttpResponse<String> response = client.send(IPRequest, HttpResponse.BodyHandlers.ofString());
 
-            List<IPAddress> ipAddresses = mapper.readValue(response.body(), new TypeReference<List<IPAddress>>() {});
+                ObjectMapper mapper = new ObjectMapper();
 
-            ipAddresses.forEach(System.out::println);
+                List<IPAddress> ipAddresses = mapper.readValue(response.body(), new TypeReference<List<IPAddress>>() {});
 
+                ipAddresses.forEach(System.out::println);
+                
+            }  
 
         } catch (URISyntaxException e) {
             System.out.println("URL is not valid: " + e);
@@ -46,6 +50,10 @@ public class IPHandler {
             e.printStackTrace();
         }
         
+    }
+
+    public static String getAPIURL() {
+        return APIURL;
     }
 
     // Put IP Addresses in a list instead and check for duplicates that way. 
