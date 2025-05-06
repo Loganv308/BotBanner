@@ -22,10 +22,8 @@ To run this project, you will need to add the following environment variables to
 `BOTBANNER_PASSWORD` - Database Password
 
 
-
-
 ## Tech Stack
 
-**Client:** Java, JDBC, HTTPClient (API), JSONParser
+**Client:** Java, JDBC, HTTPClient (API), JSONParser, ObjectMapper
 
 **Database:** PostgreSQL
