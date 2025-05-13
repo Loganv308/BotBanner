@@ -15,7 +15,7 @@ public class IPAddress {
     private Long latitude;
     private Long longitude;
     private String organization;
-    private Integer zip;
+    private String zip;
     private String timezone;
     private String query;
     
@@ -29,7 +29,7 @@ public class IPAddress {
             @JsonProperty("lat") Long latitude,
             @JsonProperty("lon") Long longitude,
             @JsonProperty("org") String organization,
-            @JsonProperty("zip") Integer zip,
+            @JsonProperty("zip") String zip,
             @JsonProperty("timezone") String timezone,
             @JsonProperty("query") String query
     ) {
@@ -59,7 +59,7 @@ public class IPAddress {
     public Long getLat() { return this.latitude; }
     public Long getLong() { return this.longitude; }
     public String getOrganization() { return this.organization; }
-    public Integer getZip() { return this.zip; }
+    public String getZip() { return this.zip; }
     public String getTimezone() { return this.timezone; }
     public String getQuery() { return this.query; }
 

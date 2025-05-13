@@ -101,20 +101,21 @@ public class FileHandler {
                     String username = matcher.group(1);
                     String ipAddress = matcher.group(2);
 
-                    if (!processedIPs.contains(ipAddress)) {
+                    if (username != null && whiteList.contains(username)) {
+                        System.out.println(username + " is in whitelist, moving on...");
+                        System.out.println("\n");
+                    } 
+
+                    if(!processedIPs.contains(ipAddress)) { 
                         ipHandler.getIPInformation(Set.of(ipAddress));
                 
                         // Mark as processed
                         processedIPs.add(ipAddress);
                     } else {
                         System.out.println("Already processed IP: " + ipAddress);
-                    }
-                
-                    if (username != null && whiteList.contains(username)) {
-                        System.out.println(username + " is in whitelist, moving on...");
                         System.out.println("\n");
-                    } else {
-
+                    }
+                    // Commented out temporarily for testing purposes
                     //     boolean exists = ipHandler.ip_exists(ipAddress);
                     //     System.out.println("IP rule exists for " + ipAddress + ": " + exists);
 
@@ -124,7 +125,7 @@ public class FileHandler {
                     //     }  else {
                     //         System.out.println("Username: " + username + ", IP: " + ipAddress + " already exists...");
                     //     }   
-                    }
+                    
                 }
             }
 

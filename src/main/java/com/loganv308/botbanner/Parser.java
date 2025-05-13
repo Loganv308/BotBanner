@@ -1,7 +1,7 @@
 package com.loganv308.botbanner;
 
 import java.io.IOException;
-import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Set;
 
 import org.json.simple.parser.ParseException;
@@ -16,17 +16,8 @@ public class Parser {
 
     // Initializing Database Handler class
     private static final DatabaseHandler dbHandler = new DatabaseHandler();
-    
-    // Initializing Connection for Database class
-    private static final Connection con = dbHandler.connect();
 
     public void run() throws IOException, InterruptedException, ParseException {
-
-        // if(con != null) {
-        //     System.out.println("Database connection successful!");
-        // } else {
-        //     System.out.println("Database connection didn't connect :(");
-        // }
 
         try {
             Set<String> whiteList = fileHandler.getWhitelist();
@@ -37,5 +28,14 @@ public class Parser {
         }
 
         fileHandler.getRegexIPs();
+
+        // Main connect to database try/catch 
+        // Connection con = dbHandler.connect()
+        try {
+            dbHandler.connect();
+            dbHandler.createTables();
+        } catch (SQLException e) {
+            System.out.println("Unable to create tables: " + e);
+        }
     }
 }

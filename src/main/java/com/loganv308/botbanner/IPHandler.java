@@ -9,7 +9,6 @@ import java.net.http.HttpResponse;
 import java.util.Iterator;
 import java.util.Set;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class IPHandler {
@@ -17,9 +16,7 @@ public class IPHandler {
     // Specific class instances
     private static final String APIURL = "http://ip-api.com/json/";
     private static IPAddress ipAddress;
-    private static JsonNode jsonNode;
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static DatabaseHandler dbHandler = new DatabaseHandler();
     
     // Takes in a set of IP addresses, calls the IP-API website above which obtains information of each. From there, it passes the information into the database via IP Address class.  
     public IPAddress getIPInformation(Set<String> ipAddr) {
@@ -43,15 +40,11 @@ public class IPHandler {
 
                 ipAddress = mapper.readValue(response.body(), IPAddress.class);
 
-                jsonNode = mapper.readTree(response.body());    
+                mapper.readTree(response.body());    
 
                 System.out.println("URL: " + ipURL);
                 System.out.println(ipAddress.toString() + "\n");
             }
-
-        // 
-
-        // System.out.println(ipAddress.toString());
  
         } catch (URISyntaxException e) {
             System.out.println("URL is not valid: " + e);
