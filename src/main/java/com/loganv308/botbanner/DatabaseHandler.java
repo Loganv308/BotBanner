@@ -15,14 +15,19 @@ import java.util.stream.Collectors;
 
 public class DatabaseHandler {
 
-    // Class variables
+    // User, Pass, URL class variables used for connecting to Database. 
     private final String username;
     private final String password;
     private final String url;
+    
+    // Connection used throughout this class in multiple functions.  
+    private static Connection con;
 
-    private static final String createTablesSQL = "src/main/java/com/loganv308/botbanner/Queries/CREATEIPTABLES.sql";
+    // Create tables SQL script in the Queries directory. 
+    private static final String CREATEIPTABLES = "src/main/java/com/loganv308/botbanner/Queries/CREATEIPTABLES.sql";
+    private static final String RESETGENIDS = "src/main/java/com/loganv308/botbanner/Queries/RESETGENIDS.sql";
 
-    // Constructor
+    // Constructor which grabs the ENV variables set for DB User, Password, and JDBC Connection URL. 
     public DatabaseHandler() {
         this.username = System.getenv("BOTBANNER_USER");
         this.password = System.getenv("BOTBANNER_PASSWORD");
@@ -30,21 +35,21 @@ public class DatabaseHandler {
     }
 
     // Connect to Database. Returns c (connection) 
-    public Connection connect() {
-        Connection c = null;
-        
+    public Connection connect() throws SQLException {
         try {
-            c = DriverManager.getConnection(url, username, password);
+            con = DriverManager.getConnection(url, username, password);
         }  catch (SQLException e) {
             System.err.println("SQL Exception: " + e.getMessage());
+            throw e;
         }
 
-        return c;
+        return con;
     }
 
     // Function to load the SQL File into the 
     public static String loadSQLFile(String path) throws IOException  {
         try(InputStream input = DatabaseHandler.class.getClassLoader().getResourceAsStream(path)) {
+            System.out.println("THIS IS THE INPUTSTREAM: " + input);
             if (input == null) throw new RuntimeException("SQL file not found: " + path);
             return new BufferedReader(new InputStreamReader(input))
                 .lines()
@@ -53,49 +58,55 @@ public class DatabaseHandler {
     }
 
     // Check if table exists, returns true if found, else returns false. 
-    public boolean tableExists(Connection con, String tableName) {
+    public boolean tableExists(String tableName) {
         boolean exists = false;
-        try {
-            DatabaseMetaData dbMeta = con.getMetaData();
-            ResultSet rs = dbMeta.getTables(null, null, tableName, null);
-            while(rs.next()) {
-                String name = rs.getString("IPInformation");
-                if(tableName.equals(name)) {
-                    exists = true;
-                    System.out.println("Table exists, moving on...");
-                    break;
+        
+        if (con == null) {
+            System.out.println("Can't connect to Database.");
+            return false;
+        } else {
+            try {
+                DatabaseMetaData dbMeta = con.getMetaData();
+                try (ResultSet rs = dbMeta.getTables(null, null, tableName, null)) {
+                    while(rs.next()) {
+                        String name = rs.getString("IPInformation");
+                        if(tableName.equalsIgnoreCase(name)) {
+                            exists = true;
+                            System.out.println("Table exists, moving on...");
+                            break;
+                        }
+                    }
                 }
+            } catch (SQLException e) {
+                System.out.println("Caught: " + e.getClass().getName() + "Error: " + e);
             }
-        } catch (SQLException e) {
-            System.err.println("Error in Table_exists check: " + e);
         }
 
         return exists;
     }
 
     // Creates the DB tables in the IPInformation table
-    public void createTables() throws IOException, SQLException {
+    public void createTables() throws SQLException {
 
-        Connection con = connect();
-
-        String tableName = "IPAddresses";
+        String tableName = "IPInformation";
         
-        boolean tableExists = tableExists(con, tableName);
+        boolean tableExists = tableExists(tableName);
 
         if(tableExists == true) {
             System.out.println("Tables already created, moving on..." + "\n");
         } else {
-            try (con){
+            try {
+                if(con == null) {
+                    System.out.println("Connection is null, fix DB Connection.");
+                } else {
+                    String sql = loadSQLFile(CREATEIPTABLES);
 
-                String sql = loadSQLFile(createTablesSQL);
-
-                Statement stmt = con.createStatement();
-
-                stmt.executeQuery(sql);
-
+                    Statement stmt = con.createStatement();
+    
+                    stmt.executeQuery(sql);
+                }
             } catch (IOException e) {
                 System.out.println("No file found: " + e);
-                throw e;
             } catch (SQLException e) {
                 System.out.println("SQL Exception: " + e);
                 throw e;
@@ -103,11 +114,9 @@ public class DatabaseHandler {
         }
     }
 
-    public void resetKeys() throws IOException, SQLException {
-        Connection con = connect();
-        
+    public void resetIncrementKeys() throws IOException, SQLException {
         try {
-            String sql = loadSQLFile("src/main/java/com/loganv308/botbanner/Queries/RESETGENIDS.sql");
+            String sql = loadSQLFile(RESETGENIDS);
 
             PreparedStatement stmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             
