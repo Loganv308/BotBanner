@@ -24,6 +24,8 @@ To run this project, you will need to add the following environment variables to
 
 ## Tech Stack
 
-**Client:** Java, JDBC, HTTPClient (API), JSONParser, ObjectMapper
+**Client:** Java
+
+**Libraries:** JDBC, HTTPClient (API), JSONParser, ObjectMapper
 
 **Database:** PostgreSQL
