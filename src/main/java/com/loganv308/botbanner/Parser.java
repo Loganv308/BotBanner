@@ -29,13 +29,19 @@ public class Parser {
 
         fileHandler.getRegexIPs();
 
-        // Main connect to database try/catch 
-        // Connection con = dbHandler.connect()
         try {
             dbHandler.connect();
-            dbHandler.createTables();
+            System.out.println(dbHandler.databaseExists("IPInformation"));
+            if (dbHandler.databaseExists("IPInfo") != true) {
+                System.out.println("Creating database...");
+                // dbHandler.createDatabase();
+            } else {
+                System.out.println("Database is already created, moving on...");
+            }
+            
+            // dbHandler.createTable();
         } catch (SQLException e) {
-            System.out.println("Unable to create tables: " + e);
+            System.out.println("SQL Exception: " + e);
         }
     }
 }

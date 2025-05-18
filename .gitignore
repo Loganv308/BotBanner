@@ -1,1 +1,4 @@
 src/data/whitelist.json
+src/main/java/com/loganv308/botbanner/.env
+target/classes/com/loganv308/botbanner/.env
+.env
