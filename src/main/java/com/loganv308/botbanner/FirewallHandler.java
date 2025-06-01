@@ -3,7 +3,13 @@ package com.loganv308.botbanner;
 import java.io.IOException;
 import java.util.Scanner;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class FirewallHandler {
+
+    private static final Logger logger = LogManager.getLogger(FirewallHandler.class);
+    
     public boolean addFirewallRule(String ipAddr) throws IOException, InterruptedException {
         String[] cmd = {"iptables", "-A", "INPUT", "-s", ipAddr, "-j", "DROP"};
 
@@ -15,16 +21,16 @@ public class FirewallHandler {
     
             if (exitCode != 0) {
                 Scanner errScanner = new Scanner(process.getErrorStream());
-                System.err.println("Failed to add iptables rule:");
+                logger.error("Failed to add iptables rule:");
                 while (errScanner.hasNextLine()) {
-                    System.err.println(errScanner.nextLine());
+                    logger.error(errScanner.nextLine());
                 }
                 errScanner.close();
             }
     
             return exitCode == 0;
-        } catch (IOException | InterruptedException e) {
-            System.err.println("Exception: " + e.getMessage());
+        } catch (IOException e) {
+            logger.error("Exception: " + e.getMessage());
             return false;
         }
     }  

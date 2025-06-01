@@ -16,7 +16,7 @@ public class Bot {
                 // 1 hour prod code
                 // Thread.sleep(3600);
 
-                // 6 Seconds test code
+                // 16 Seconds test code
                 Thread.sleep(16000);
             } catch (InterruptedException e) {
                 e.printStackTrace();

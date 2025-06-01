@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -18,11 +20,13 @@ import org.json.simple.parser.ParseException;
 
 public class FileHandler {
 
+    private static final Logger logger = LogManager.getLogger(FileHandler.class);
+
     // Hardcoded file path to latest server logs file. 
-    private static final File SERVERLOGS = new File("/home/container/42e4301e-3d84-4e5c-9e0a-f66255771634/logs/latest.log");
+    private static final File SERVERLOGS = new File("/opt/Homelab/MCServer/server/logs/latest.log");
 
     // Hardcoded file path to MC server whitelist.
-    private static final File WHITELIST = new File("/home/container/42e4301e-3d84-4e5c-9e0a-f66255771634/whitelist.json");
+    private static final File WHITELIST = new File("/opt/Homelab/MCServer/server/whitelist.json");
 
     // Initializing IP Handler class
     private static final IPHandler ipHandler = new IPHandler();
@@ -41,7 +45,7 @@ public class FileHandler {
                 writer.newLine();
             }            
         } catch (IOException e) {
-            System.err.println("An error occurred while writing to the file: " + e.getMessage());
+            logger.error("An error occurred while writing to the file: " + e.getMessage());
             throw e;
         }
     }
@@ -67,10 +71,10 @@ public class FileHandler {
                 whiteList.add(username);
             } 
         } catch (IOException e) {
-            System.err.println("Error reading whitelist file: " + e.getMessage());
+            logger.error("Error reading whitelist file: " + e.getMessage());
             throw e;
         } catch (ParseException e) {
-            System.err.println("Error parsing whitelist JSON: " + e.getMessage());
+            logger.error("Error parsing whitelist JSON: " + e.getMessage());
             throw e;
         } 
         return whiteList;
@@ -102,8 +106,8 @@ public class FileHandler {
                     String ipAddress = matcher.group(2);
 
                     if (username != null && whiteList.contains(username)) {
-                        System.out.println(username + " is in whitelist, moving on...");
-                        System.out.println("\n");
+                        logger.info(username + " is in whitelist, moving on...");
+                        logger.info("\n");
                     } 
 
                     if(!processedIPs.contains(ipAddress)) { 
@@ -112,8 +116,8 @@ public class FileHandler {
                         // Mark as processed
                         processedIPs.add(ipAddress);
                     } else {
-                        System.out.println("Already processed IP: " + ipAddress);
-                        System.out.println("\n");
+                        logger.info("Already processed IP: " + ipAddress);
+                        logger.info("\n");
                     }
                     // Commented out temporarily for testing purposes
                     //     boolean exists = ipHandler.ip_exists(ipAddress);
@@ -130,7 +134,7 @@ public class FileHandler {
             }
 
         } catch (IOException e) {
-            System.err.println("Error reading whitelist file: " + e.getMessage());
+            logger.error("Error reading whitelist file: " + e.getMessage());
         }
     }
 }

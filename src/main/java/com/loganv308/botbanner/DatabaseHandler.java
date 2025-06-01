@@ -10,14 +10,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class DatabaseHandler {
 
     // User, Pass, URL class variables used for connecting to Database. 
-    private final String username;
-    private final String password;
-    private final String url;
+    private static String username;
+    private static String password;
+    private static String url;
     
     // Connection used throughout this class in multiple functions.  
     private static Connection con;
@@ -33,6 +36,9 @@ public class DatabaseHandler {
     private static final String DATABASENAME = "IPInformation";
     private static final String TABLENAME = "IPInfo";
 
+    // Logger for the class, writes to app.log
+    private static final Logger logger = LogManager.getLogger(DatabaseHandler.class);
+
     // Special library to load environment variables from .env file
     private static final Dotenv dotenv = Dotenv.load();
 
@@ -44,14 +50,14 @@ public class DatabaseHandler {
     }
 
     // Connect to Database. Returns c (connection) 
-    public Connection connect() throws SQLException {
+    public static Connection connect() throws SQLException {
         try {
             con = DriverManager.getConnection(url, username, password);
+            logger.info("Connection successful, moving on...");
         }  catch (SQLException e) {
-            System.err.println("SQL Exception: " + e.getMessage());
-            throw e;
+            logger.error("SQL Exception (Connect): " + e.getMessage());
         }
-
+        logger.debug("Connection: " + con);
         return con;
     }
 
@@ -63,64 +69,66 @@ public class DatabaseHandler {
         // Uses a BufferedReader wrapped around a FileReader to read the file efficiently.
         try(BufferedReader br = new BufferedReader(new FileReader(path))) {
             if (path == null) throw new RuntimeException("SQL file not found: " + path);
+            
             String line;
+
             while((line = br.readLine()) != null) {
                 sb.append(line).append('\n');
             }
         } 
-        System.out.println(sb.toString());
+        // System.out.println(sb.toString());
         return sb.toString();
     }
 
     // Check if database exists, returns true if found, else returns false. 
-    public boolean databaseExists(String tableName) {
+    public boolean databaseExists(String databaseName) {
+        
         boolean exists = false;
         
-        if (con == null) {
-            System.out.println("Can't connect to Database.");
-            return false;
-        }
-
-        try (Statement stmt = con.createStatement();){
-
-            String databaseExists = loadSQLFile(DATABASEEXISTS);
-
-            ResultSet resultSet = stmt.executeQuery(databaseExists);
-
-            if(resultSet.getInt(1) != 0) {
-                exists = true;
-                stmt.close();
-                resultSet.close();
-                return exists;
-            } else {
-                exists = false;
-                stmt.close();
-                resultSet.close();
-                return exists;
+        try (Connection conn = DriverManager.getConnection(url, username, password)){
+             if (conn == null) {
+                logger.error("Can't connect to Database.");
+                return false;
             }
             
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            System.out.println("Can't access file. ");
-        }
+            try (Statement stmt = conn.createStatement()) {
+            // Ensure this loads a valid SQL query string
+                String databaseExists = "SELECT 1 FROM pg_database WHERE datname = '" + databaseName + "'";
+
+                try (ResultSet resultSet = stmt.executeQuery(databaseExists)) {
+                    if (resultSet.next()) {
+                        exists = true;
+                    }
+                }
+            }
+            
+            
+        } catch(SQLException e) {
+            logger.error(e.getMessage());
+        } 
+
+        return exists;
+    }
+
+    public boolean tablesExist(String[] tables) {
+        boolean exists = false;
+        
+        
 
         return exists;
     }
 
     // Creates the DB tables in the IPInformation table
     public void createTable() throws SQLException {
-
-        // String tableName = "IPInformation";
         
         boolean databaseExists = databaseExists(DATABASENAME);
 
         if(databaseExists == true) {
-            System.out.println("Tables already created, moving on..." + "\n");
+            logger.info("Tables already created, moving on..." + "\n");
         } else {
             try {
                 if(con == null) {
-                    System.out.println("Connection is null, fix DB Connection.");
+                    logger.error("Connection is null, fix DB Connection.");
                 } else {
                     
                     String sql = loadSQLFile(CREATEIPTABLES);
@@ -130,37 +138,33 @@ public class DatabaseHandler {
                     stmt.executeQuery(sql);
                 }
             } catch (IOException e) {
-                System.out.println("No file found: " + e);
+                logger.error("No file found: " + e.getMessage());
             } catch (SQLException e) {
                 if (e.getErrorCode() == 1007) {
                     // Database already exists error
-                    System.out.println("Database already exists. Printing error msg.");
-                    System.out.println(e.getMessage());
+                    logger.info("Database already exists. Printing error msg." + e.getMessage());
                 } else {
                     // Some other problems, e.g. Server down, no permission, etc
-                    e.printStackTrace();
+                    logger.error(e.getMessage());
                 }
             }
         }
     }
 
     public void createDatabase() throws SQLException {
-        if (con == null) {
-            System.out.println("Can't connect to Database.");
-        } else {
-            try {
-                String sql = loadSQLFile(CREATEDATABASE);
 
-                Statement stmt = con.createStatement();
+        try (Connection conn = DriverManager.getConnection(url, username, password) ) {
+            String sql = loadSQLFile(CREATEDATABASE);
 
-                stmt.execute(sql);
+            Statement stmt = conn.createStatement();
 
-            } catch (IOException e) {
-                System.out.println("No file found: " + e);
-            } catch (SQLException e) {
-                System.out.println("SQL Exception: " + e);
-                throw e;
-            }
+            stmt.execute(sql);
+
+        } catch (IOException e) {
+            logger.error("No file found: " + e.getMessage());
+        } catch (SQLException e) {
+            logger.error("SQL Exception: " + e.getMessage());
+            throw e;
         }
     }
 
@@ -176,14 +180,14 @@ public class DatabaseHandler {
             
             if (keys.next()) {
                 int id = keys.getInt(1); // <- The auto-incremented ID from the sequence
-                System.out.println("Last ID: " + id);
+                logger.info("Last ID: " + id);
             }
         
         } catch (IOException e) {
-            System.out.println("No file found: " + e);
+            logger.error("No file found: " + e.getMessage());
             throw e;
         } catch (SQLException e) {
-            System.out.println("SQL Exception: " + e);
+            logger.error("SQL Exception: " + e.getMessage());
             throw e;
         }
     }

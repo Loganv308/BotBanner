@@ -1,4 +1,4 @@
-CREATE DATABASE IF NOT EXISTS "IPInformation"
+CREATE DATABASE "IPInformation"
     WITH
     OWNER = anton
     ENCODING = 'UTF8'

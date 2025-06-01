@@ -4,13 +4,15 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.simple.parser.ParseException;
 
 public class Parser {
 
     // Initializing Firewall Handler class
     // private static final FirewallHandler fwHandler = new FirewallHandler();
-
+    private static final Logger logger = LogManager.getLogger(Parser.class);
     // Initializing File Handler class
     private static final FileHandler fileHandler = new FileHandler();
 
@@ -21,27 +23,31 @@ public class Parser {
 
         try {
             Set<String> whiteList = fileHandler.getWhitelist();
-            System.out.println("Whitelist loaded: " + whiteList);
+            logger.info("Whitelist loaded: " + whiteList);
         } catch (IOException | ParseException e) {
-            System.err.println("Error loading whitelist: " + e.getMessage());
+            logger.error("Error loading whitelist: " + e.getMessage());
             throw e;
         }
 
         fileHandler.getRegexIPs();
 
         try {
-            dbHandler.connect();
-            System.out.println(dbHandler.databaseExists("IPInformation"));
-            if (dbHandler.databaseExists("IPInfo") != true) {
-                System.out.println("Creating database...");
-                // dbHandler.createDatabase();
+            //dbHandler.connect();
+            //System.out.println(dbHandler.databaseExists("IPInformation"));
+            
+            if (!dbHandler.databaseExists("IPInformation")) {
+                logger.info("Creating database...");
+                dbHandler.createDatabase();
             } else {
-                System.out.println("Database is already created, moving on...");
+                logger.info("Database is already created, moving on...");
             }
             
-            // dbHandler.createTable();
+            // if(!dbHandler.createTable()) {
+
+            // }
+
         } catch (SQLException e) {
-            System.out.println("SQL Exception: " + e);
+            logger.error("SQL Exception: " + e);
         }
     }
 }
