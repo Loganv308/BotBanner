@@ -12,7 +12,13 @@ public class Parser {
 
     // Initializing Firewall Handler class
     // private static final FirewallHandler fwHandler = new FirewallHandler();
+
+    private static final String DATABASENAME = "IPInformation";
+    private static final String TABLENAME = "IPInfo";
+
+    // Initializing class logger
     private static final Logger logger = LogManager.getLogger(Parser.class);
+    
     // Initializing File Handler class
     private static final FileHandler fileHandler = new FileHandler();
 
@@ -42,6 +48,14 @@ public class Parser {
                 logger.info("Database is already created, moving on...");
             }
             
+            if(!dbHandler.tableExists("IPInfo")) {
+                logger.info("Creating table...");
+                dbHandler.createTable();
+            } else {
+                logger.info("Table is already created, moving on...");
+            }
+
+                
             // if(!dbHandler.createTable()) {
 
             // }

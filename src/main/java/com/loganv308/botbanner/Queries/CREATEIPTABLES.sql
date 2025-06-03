@@ -1,4 +1,4 @@
-CREATE TABLE IPInfo (
+CREATE TABLE IPInformation.IPInfo (
     id SERIAL PRIMARY KEY,
     IpAddress TEXT NOT NULL,
     CurrentDate TIMESTAMP WITH TIME ZONE,
