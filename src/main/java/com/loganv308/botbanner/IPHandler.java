@@ -9,6 +9,9 @@ import java.net.http.HttpResponse;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class IPHandler {
@@ -17,6 +20,7 @@ public class IPHandler {
     private static final String APIURL = "http://ip-api.com/json/";
     private static IPAddress ipAddress;
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final Logger logger = LogManager.getLogger(IPHandler.class);
     
     // Takes in a set of IP addresses, calls the IP-API website above which obtains information of each. From there, it passes the information into the database via IP Address class.  
     public IPAddress getIPInformation(Set<String> ipAddr) {
@@ -25,7 +29,7 @@ public class IPHandler {
 
             HttpClient client = HttpClient.newHttpClient();
 
-            System.out.println(ipAddr);
+            logger.debug(ipAddr);
 
             // HTTP request for IP info website
             while(ipIterator.hasNext()) {
@@ -42,16 +46,16 @@ public class IPHandler {
 
                 mapper.readTree(response.body());    
 
-                System.out.println("URL: " + ipURL);
-                System.out.println(ipAddress.toString() + "\n");
+                logger.debug("URL: " + ipURL);
+                logger.info(ipAddress.toString() + "\n");
             }
  
         } catch (URISyntaxException e) {
-            System.out.println("URL is not valid: " + e);
+            logger.error("URL is not valid: " + e);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("IOException: " + e);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.error("InterruptedException: " + e);
         }
 
         return ipAddress;
@@ -69,7 +73,7 @@ public class IPHandler {
         try {
             Process process = processBuilder.start();
             int exitCode = process.waitFor();
-            System.out.println(exitCode);
+            logger.debug("IP_Exists Exit code: " + exitCode);
             return exitCode == 0; // 1 means the rule exists
         } catch (IOException | InterruptedException e) {
             return false;

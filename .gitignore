@@ -1,1 +1,4 @@
-src/data/whitelist.json
+*.env
+*.log
+*.json
+
