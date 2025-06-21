@@ -13,7 +13,7 @@ public class Parser {
     // Initializing Firewall Handler class
     // private static final FirewallHandler fwHandler = new FirewallHandler();
 
-    private static final String DATABASENAME = "IPInformation";
+    private static final String SCHEMANAME = "IPInformation";
     private static final String TABLENAME = "IPInfo";
 
     // Initializing class logger
@@ -25,7 +25,7 @@ public class Parser {
     // Initializing Database Handler class
     private static final DatabaseHandler dbHandler = new DatabaseHandler();
 
-    public void run() throws IOException, InterruptedException, ParseException {
+    public static void main(String[] args) throws IOException, InterruptedException, ParseException {
 
         try {
             Set<String> whiteList = fileHandler.getWhitelist();
@@ -38,30 +38,26 @@ public class Parser {
         fileHandler.getRegexIPs();
 
         try {
-            //dbHandler.connect();
-            //System.out.println(dbHandler.databaseExists("IPInformation"));
-            
-            if (!dbHandler.databaseExists("IPInformation")) {
-                logger.info("Creating database...");
-                dbHandler.createDatabase();
+            if(!dbHandler.schemaExists()) {
+                logger.info("Creating Schema...");
+                dbHandler.createSchema(SCHEMANAME);
             } else {
-                logger.info("Database is already created, moving on...");
+                logger.info("Schema is already created, moving on...");
             }
-            
-            if(!dbHandler.tableExists("IPInfo")) {
+
+            if(!dbHandler.tableExists(TABLENAME)) {
                 logger.info("Creating table...");
                 dbHandler.createTable();
             } else {
                 logger.info("Table is already created, moving on...");
             }
 
-                
-            // if(!dbHandler.createTable()) {
-
-            // }
+            Thread.sleep(16000);
 
         } catch (SQLException e) {
-            logger.error("SQL Exception: " + e);
+            logger.error("SQL Exception: " + e.getMessage());
+        } catch (InterruptedException e) {
+            logger.error(e.getMessage());
         }
     }
 }

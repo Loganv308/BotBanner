@@ -1,4 +1,4 @@
 INSERT INTO IPInformation (
-    id, IpAddress, CurrentDate, Hostname, City, Region,
-    Country, Coords, Organization, Zip, Timezone
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    CurrentDate, Hostname, City, Region, RegionName, Country, 
+    CoordsLat, CoordsLong, Organization, Zip, Timezone, IpAddress
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);

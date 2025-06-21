@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.OffsetDateTime;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,10 +31,9 @@ public class DatabaseHandler {
 
     // Create tables SQL script in the Queries directory. 
     private static final String CREATEIPTABLES = "src/main/java/com/loganv308/botbanner/Queries/CREATEIPTABLES.sql";
+    private static final String TABLEEXISTS = "src/main/java/com/loganv308/botbanner/Queries/TABLEEXISTS.sql";    
     private static final String RESETGENIDS = "src/main/java/com/loganv308/botbanner/Queries/RESETGENIDS.sql";
-    private static final String CREATEDATABASE = "src/main/java/com/loganv308/botbanner/Queries/CREATEDATABASE.sql";
-    private static final String DATABASEEXISTS = "src/main/java/com/loganv308/botbanner/Queries/DATABASEEXISTS.sql";
-    private static final String TABLEEXISTS = "src/main/java/com/loganv308/botbanner/Queries/TABLEEXISTS.sql";
+    private static final String INSERTINTOTABLE = "src/main/java/com/loganv308/botbanner/Queries/INSERTTOIPTABLE.sql"; 
 
     // Logger for the class, writes to app.log
     private static final Logger logger = LogManager.getLogger(DatabaseHandler.class);
@@ -41,33 +41,13 @@ public class DatabaseHandler {
     // Special library to load environment variables from .env file
     private static final Dotenv dotenv = Dotenv.load();
 
+    private static final IPAddress ipaddr = new IPAddress();
+
     // Constructor which grabs the ENV variables set for DB User, Password, and JDBC Connection URL. 
     public DatabaseHandler() {
         this.username = dotenv.get("BOTBANNER_USER");
         this.password = dotenv.get("BOTBANNER_PASSWORD");
         this.url = dotenv.get("BOTBANNER_URL"); 
-    }
-
-    // This function is used as a baseline connect 
-    public static Connection initialConnect(String database) throws SQLException {
-        
-        String initialUrl = "jdbc:postgresql://192.168.1.97:5432/" + database;
-
-        logger.info("initialConnection" + initialUrl);
-
-        return DriverManager.getConnection(initialUrl, username, password);
-    }
-
-    // Connect to Database. Returns c (connection) 
-    public static Connection connect() {
-        try {
-            con = DriverManager.getConnection(url, username, password);
-            logger.info("Connection successful, moving on...");
-        }  catch (SQLException e) {
-            logger.error("SQL Exception (Connect): " + e.getMessage());
-        }
-        logger.debug("Connection: " + con);
-        return con;
     }
 
     // Function to load the SQL File into the 
@@ -89,68 +69,83 @@ public class DatabaseHandler {
         return sb.toString();
     }
 
-    // Check if database exists, returns true if found, else returns false. 
-    public boolean databaseExists(String databaseName) {
+    public boolean tableExists(String tableName) {
         
         boolean exists = false;
-        
-        try (Connection conn = DriverManager.getConnection(url, username, password)){
-             if (conn == null) {
-                logger.error("Can't connect to Database.");
+
+        try (Connection conn = DriverManager.getConnection(url, username, password)) {
+            if (conn == null) {
+                logger.error("Connection failed.");
                 return false;
             }
-            
-            // Load the SQL from the file
-            String databaseExistsSql = new String(Files.readAllBytes(Paths.get(DATABASEEXISTS)), StandardCharsets.UTF_8);
 
-            try (PreparedStatement stmt = conn.prepareStatement(databaseExistsSql)) {
-                
-                stmt.setString(1, databaseName);
+            String tableExistsSql = new String(Files.readAllBytes(Paths.get(TABLEEXISTS)), StandardCharsets.UTF_8);
 
-                try (ResultSet resultSet = stmt.executeQuery()) {
-                    if (resultSet.next()) {
-                        exists = true;
-                    }
-                }
+            PreparedStatement stmt = conn.prepareStatement(tableExistsSql);
+
+            stmt.setString(1, tableName);
+
+            ResultSet resultSet = stmt.executeQuery();
+
+            if (resultSet.next()) {
+                exists = true;
             }
             
-        } catch(SQLException | IOException e) {
-            logger.error(e.getMessage());
+
+        } catch (SQLException | IOException e) {
+            logger.error("Error checking if table exists: " + e.getMessage());
         }
 
         return exists;
     }
 
-    public boolean tableExists(String tableName) {
-    boolean exists = false;
+    // This is exclusive to PostgreSQL. Used to check for Schema existence.
+    public boolean schemaExists() throws SQLException {
+        Boolean exists = false;
 
-    try (Connection conn = DriverManager.getConnection(url, username, password)) {
-        if (conn == null) {
-            logger.error("Connection failed.");
-            return false;
-        }
+        try (Connection conn = DriverManager.getConnection(url, username, password)) {
+            if (conn == null) {
+                logger.error("Connection failed.");
+            } else {
+                String schemaExistsSql = "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'ipinformation'";
 
-        String tableExistsSql = new String(Files.readAllBytes(Paths.get(TABLEEXISTS)), StandardCharsets.UTF_8);
+                Statement stmt = conn.createStatement();
 
-        try (PreparedStatement stmt = conn.prepareStatement(tableExistsSql)) {
-            stmt.setString(1, tableName);
-
-            try (ResultSet resultSet = stmt.executeQuery()) {
-                if (resultSet.next()) {
-                    exists = true;
-                }
+                try(ResultSet rs = stmt.executeQuery(schemaExistsSql)){
+                    exists = rs.next();
+                }    
             }
+
+        } catch (SQLException e) {
+            logger.error("Error checking if Schema exists (schemaExists): " + e.getMessage());
         }
 
-    } catch (SQLException | IOException e) {
-        logger.error("Error checking if table exists: " + e.getMessage());
+        return exists;
     }
 
-    return exists;
-}
+    // Creates the Schema within database
+    public void createSchema(String schemaName) {
+        try (Connection conn = DriverManager.getConnection(url, username, password)) {
+            if(conn == null) {
+                logger.error("Connection is null, fix DB Connection.");
+            } else {
+                // This needs to be hardcoded. Apparently PostgreSQL doesn't support prepared statements for schema based changes.
+                String schemaExistsSql = "CREATE SCHEMA " + schemaName + ";";
 
+                Statement stmt = conn.createStatement();
+                
+                ResultSet rs = stmt.executeQuery(schemaExistsSql); 
 
-    // Creates the DB tables in the IPInformation table
+                if (rs.next()) {
+                    logger.info("Schema " + schemaName + " has been created");
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("SQL Exception (createSchema): " + e.getMessage());
+        }
+    }
+
+    // Creates the DB tables within postgresql database
     public void createTable() throws SQLException {
         
         try (Connection conn = DriverManager.getConnection(url, username, password)) {
@@ -168,31 +163,49 @@ public class DatabaseHandler {
             logger.error("No file found: " + e.getMessage());
         } catch (SQLException e) {
             if (e.getErrorCode() == 1007) {
-                // Database already exists error
-                logger.info("Database already exists. Printing error msg." + e.getMessage());
+                // table already exists error
+                logger.info("Table already exists. Printing error msg." + e.getMessage());
             } else {
                 // Some other problems, e.g. Server down, no permission, etc
-                logger.error(e.getMessage());
+                logger.error("other error: " + e.getMessage());
             }
-        }
-}
+        }   
+    }
 
-    public void createDatabase() throws SQLException {
-
+    // Insert the return IP data after formatting it
+    public void insertData() {
         try (Connection conn = DriverManager.getConnection(url, username, password)) {
-            String sql = loadSQLFile(CREATEDATABASE);
+            if(conn == null) {
+                logger.error("Connection is null, fix DB Connection.");
+            } else { 
+                String sql = loadSQLFile(INSERTINTOTABLE);
+                
+                PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
-            Statement stmt = conn.createStatement();
+                stmt.setObject(1, OffsetDateTime.now()); 
+                stmt.setString(2, ipaddr.getHost());
+                stmt.setString(3, ipaddr.getCity());
+                stmt.setString(4, ipaddr.getRegion());
+                stmt.setString(5, ipaddr.getRegionName());
+                stmt.setString(6, ipaddr.getCountry());
+                stmt.setDouble(7, ipaddr.getLat());
+                stmt.setDouble(8, ipaddr.getLong());
+                stmt.setString(9, ipaddr.getOrganization());
+                stmt.setString(10, ipaddr.getZip());
+                stmt.setString(11, ipaddr.getTimezone());
+                stmt.setString(12, ipaddr.getQuery());
 
-            stmt.execute(sql);
+                stmt.executeUpdate();
 
+                logger.info("Executed: " + stmt.toString() );
+            } 
+        } catch (SQLException e) {
+            logger.error("SQLException (insertData)" + e.getMessage());
         } catch (IOException e) {
             logger.error("No file found: " + e.getMessage());
-        } catch (SQLException e) {
-            logger.error("SQL Exception: " + e.getMessage());
-            throw e;
         }
     }
+        
 
     public void resetIncrementKeys() throws IOException, SQLException {
         try {

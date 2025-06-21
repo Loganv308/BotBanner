@@ -36,7 +36,7 @@ public class FileHandler {
 
     private final Set<String> processedIPs = new HashSet<>();
 
-    // This class is not necessary. A Set of IP's can be filtered from the log file, then passed as a set to other functions throughout the program if needed. 
+    // This method is not necessary. A Set of IP's can be filtered from the log file, then passed as a set to other functions throughout the program if needed. 
     @Deprecated
     public void writeToFile(Set<String> ipAddresses) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("src/main/java/com/loganv308/botbanner/Output/ListOfIPs.txt"))){
